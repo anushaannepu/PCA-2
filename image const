@@ -1,0 +1,54 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
+from matplotlib.image import imread
+
+# Step 1: Load the image and convert to grayscale
+image_path = "path_to_your_image.png"  # Replace with the actual image path
+image = imread(image_path)
+
+# Convert to grayscale if the image is RGB (average of R, G, B channels)
+if image.ndim == 3:
+    image = image.mean(axis=2)
+
+print("Original Image Shape:", image.shape)
+
+# Display the original image
+plt.imshow(image, cmap='gray')
+plt.title("Original Image")
+plt.axis('off')
+plt.show()
+
+# Step 2: Reshape the image into a 2D matrix (pixels as rows, intensity values as columns)
+X = image.reshape(image.shape[0], -1)
+print("Reshaped Image Matrix Shape:", X.shape)
+
+# Step 3: Define a function to apply PCA and reconstruct the image
+def apply_pca_and_reconstruct(X, n_components):
+    # Apply PCA with the specified number of components
+    pca = PCA(n_components=n_components)
+    X_reduced = pca.fit_transform(X)
+
+    # Reconstruct the image from the reduced components
+    X_reconstructed = pca.inverse_transform(X_reduced)
+    return X_reconstructed
+
+# Step 4: Reconstruct the image using different numbers of components
+components_list = [5, 20, 50, 100]
+reconstructed_images = [apply_pca_and_reconstruct(X, n) for n in components_list]
+
+# Step 5: Plot the original and reconstructed images
+fig, axes = plt.subplots(1, len(components_list) + 1, figsize=(15, 6))
+
+# Display the original image
+axes[0].imshow(image, cmap='gray')
+axes[0].set_title("Original")
+axes[0].axis('off')
+
+# Display the reconstructed images with different numbers of components
+for i, (n, img) in enumerate(zip(components_list, reconstructed_images)):
+    axes[i + 1].imshow(img.reshape(image.shape), cmap='gray')
+    axes[i + 1].set_title(f"{n} Components")
+    axes[i + 1].axis('off')
+
+plt.show()
