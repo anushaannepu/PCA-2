@@ -1,0 +1,66 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.datasets import load_wine
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score, precision_score, recall_score
+
+# Step 1: Load the Wine dataset
+data = load_wine()
+X = data.data  # Features
+y = data.target  # Target labels
+print("Original Data Shape:", X.shape)
+
+# Step 2: Split the data into training and testing sets (70% train, 30% test)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# Step 3: Standardize the features (important for PCA)
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Step 4: Baseline Model (No PCA)
+baseline_model = LogisticRegression(max_iter=10000, random_state=42)
+baseline_model.fit(X_train, y_train)
+
+# Evaluate the baseline model
+y_pred_baseline = baseline_model.predict(X_test)
+baseline_accuracy = accuracy_score(y_test, y_pred_baseline)
+baseline_precision = precision_score(y_test, y_pred_baseline, average='weighted')
+baseline_recall = recall_score(y_test, y_pred_baseline, average='weighted')
+
+print(f"Baseline Model - Accuracy: {baseline_accuracy:.4f}, Precision: {baseline_precision:.4f}, Recall: {baseline_recall:.4f}")
+
+# Step 5: Apply PCA and train models with different numbers of components
+components_list = [2, 5, 10]
+accuracies = []
+
+for n in components_list:
+    # Apply PCA with n components
+    pca = PCA(n_components=n)
+    X_train_pca = pca.fit_transform(X_train)
+    X_test_pca = pca.transform(X_test)
+
+    # Train a Logistic Regression model on the reduced dataset
+    model = LogisticRegression(max_iter=10000, random_state=42)
+    model.fit(X_train_pca, y_train)
+
+    # Evaluate the model
+    y_pred = model.predict(X_test_pca)
+    accuracy = accuracy_score(y_test, y_pred)
+    accuracies.append(accuracy)
+
+    print(f"PCA with {n} Components - Accuracy: {accuracy:.4f}")
+
+# Step 6: Visualization - Accuracy vs. Number of Components
+plt.figure(figsize=(8, 5))
+plt.plot(components_list, accuracies, marker='o', linestyle='--', color='b', label='PCA Accuracy')
+plt.axhline(baseline_accuracy, color='r', linestyle='-', label='Baseline Accuracy')
+plt.title("Model Accuracy vs. Number of PCA Components")
+plt.xlabel("Number of PCA Components")
+plt.ylabel("Accuracy")
+plt.legend()
+plt.show()
